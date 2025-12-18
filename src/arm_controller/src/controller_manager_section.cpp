@@ -5,7 +5,6 @@
 #include "controller_base/velocity_controller_base.hpp"
 #include "controller/controller_registry.hpp"
 #include "controller_interface.hpp"
-#include "button/button_event_handler.hpp"
 // #include "controller/move2start/move2start_controller.hpp"
 // #include "controller/move2initial/move2initial_controller.hpp"
 
@@ -439,10 +438,33 @@ void ControllerManagerNode::init_action_event_listener() {
 }
 
 void ControllerManagerNode::init_button_handler() {
-    // 创建按键事件处理器
-    button_handler_ = std::make_shared<arm_controller::ButtonEventHandler>(this->shared_from_this());
+    using namespace hardware_driver::button_driver;
 
-    // 设置复现完成回调 - 发送FXJS信号让LED熄灭
+    // 创建按键事件处理器 (来自 hardware_driver)
+    button_handler_ = std::make_shared<ButtonEventHandler>();
+
+    // 设置日志回调
+    button_handler_->set_log_callback([this](const std::string& message) {
+        RCLCPP_INFO(this->get_logger(), "%s", message.c_str());
+    });
+
+    // 设置控制器切换回调
+    button_handler_->set_controller_switch_callback(
+        [this](ControllerCommand cmd, const std::string& traj_name) -> bool {
+            (void)traj_name;  // TODO: 轨迹名称传递给控制器
+            switch (cmd) {
+                case ControllerCommand::START_RECORD:
+                    return start_working_controller("TrajectoryRecord", "single_arm");
+                case ControllerCommand::STOP_RECORD:
+                    return start_working_controller("HoldState", "single_arm");
+                case ControllerCommand::START_REPLAY:
+                    return start_working_controller("TrajectoryReplay", "single_arm");
+            }
+            return false;
+        }
+    );
+
+    // 设置复现完成回调 - 发送 FXJS 信号让 LED 熄灭
     button_handler_->set_replay_complete_callback([this](const std::string& interface) {
         if (hardware_manager_ && hardware_manager_->get_hardware_driver()) {
             hardware_manager_->get_hardware_driver()->send_button_replay_complete(interface);
@@ -463,7 +485,7 @@ void ControllerManagerNode::init_button_handler() {
         "/controller_api/trajectory_replay_status", 10,
         [this](const std_msgs::msg::String::SharedPtr msg) {
             if (msg->data == "completed" && button_handler_) {
-                // 复现完成，通知按键处理器发送FXJS信号
+                // 复现完成，通知按键处理器发送 FXJS 信号
                 button_handler_->notify_replay_complete(button_handler_->get_last_interface());
                 RCLCPP_INFO(this->get_logger(), "轨迹复现完成，通知按键处理器");
             }

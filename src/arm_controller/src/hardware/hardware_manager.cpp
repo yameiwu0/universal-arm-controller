@@ -749,7 +749,7 @@ void HardwareManager::emergency_stop_joint(const std::string& interface, uint32_
 
     try {
         // TODO: 🌟 修改急停策略, hardware_driver提供一个急停的方法, 当前发送零速度命令来停止电机
-        hardware_driver_->control_motor_in_velocity_mode(interface, motor_id, 0.0);
+        hardware_driver_->control_motor_in_mit_mode(interface, motor_id, 0.0, 0.0, 0.0, 0.0, 0.01);
 
         RCLCPP_WARN(node_->get_logger(),
                    "Emergency stop executed for motor %u on interface %s",

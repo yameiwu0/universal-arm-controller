@@ -14,13 +14,9 @@
 #include "arm_controller/controller_base/mode_controller_base.hpp"
 #include "arm_controller/hardware/hardware_manager.hpp"
 #include "hardware_driver/driver/button_driver_interface.hpp"
+#include "hardware_driver/driver/button_event_handler.hpp"
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <yaml-cpp/yaml.h>
-
-// 前向声明
-namespace arm_controller {
-    class ButtonEventHandler;
-}
 
 class ControllerManagerNode : public rclcpp::Node {
 public:
@@ -115,7 +111,7 @@ private:
     std::shared_ptr<HardwareManager> hardware_manager_;
 
     // 按键事件处理器
-    std::shared_ptr<arm_controller::ButtonEventHandler> button_handler_;
+    std::shared_ptr<hardware_driver::button_driver::ButtonEventHandler> button_handler_;
 
     // [已弃用] 话题订阅管理 - 现在由各控制器在构造函数中管理生命周期
     // std::map<std::pair<std::string, std::string>, rclcpp::SubscriptionBase::SharedPtr> controller_subscriptions_;

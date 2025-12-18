@@ -556,7 +556,7 @@ bool CartesianVelocityController::send_joint_velocities(const std::vector<double
 
     for (size_t i = 0; i < motor_ids.size(); ++i) {
         double vel_deg = joint_velocities[i] * 180.0 / M_PI;  // 转为度/秒
-        hardware_driver->control_motor_in_velocity_mode(interface, motor_ids[i], vel_deg);
+        hardware_driver->control_motor_in_mit_mode(interface, motor_ids[i], 0.0, vel_deg, 0.0, 0.0, 0.01);
     }
 
     return true;
